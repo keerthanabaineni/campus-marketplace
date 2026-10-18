@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Campus Marketplace (live demo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f6;--surface:#fff;--ink:#16213e;--muted:#5b6784;--line:#d5dbe8;--ticket:#f2b705;--ok:#1b7f5c;--bad:#b42318;
+--font:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1526;--surface:#182038;--ink:#eef1f9;--muted:#9aa6c4;--line:#2b3556;--ok:#4cc79a;--bad:#ff8a7a}}
+:root[data-theme="dark"]{--bg:#0f1526;--surface:#182038;--ink:#eef1f9;--muted:#9aa6c4;--line:#2b3556;--ok:#4cc79a;--bad:#ff8a7a}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.note{background:var(--ticket);color:#16213e;text-align:center;padding:8px 16px;font-size:.9rem;font-weight:600}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--font)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--ticket);outline-offset:2px}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding:16px clamp(16px,4vw,40px);border-bottom:1px solid var(--line);background:var(--surface)}
+h1{margin:0;font-size:1.35rem;font-weight:800;letter-spacing:-.01em}
+.who{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,input{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.warn{background:transparent;color:var(--bad);border-color:var(--bad)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;padding:24px clamp(16px,4vw,40px);max-width:1200px;margin:0 auto}
+@media(max-width:860px){main{grid-template-columns:1fr}}
+.lead{margin:0 0 20px;color:var(--muted);max-width:60ch}
+.list{display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:12px}
+.card.done{opacity:.65}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.top h2{margin:0;font-size:1.15rem;font-weight:600}
+.price{font-weight:800;font-size:1.15rem;white-space:nowrap}
+.meta{color:var(--muted);font-size:.9rem}
+.pill{display:inline-block;border-radius:99px;padding:2px 10px;font-size:.82rem;font-weight:600;border:1px solid var(--line)}
+.pill.OPEN{color:var(--ok);border-color:var(--ok)} .pill.HELD{color:#8a6500;border-color:var(--ticket);background:#f2b70522}
+.pill.SOLD,.pill.CANCELLED{color:var(--muted)}
+.ticket{display:flex;align-items:center;gap:16px;background:var(--ticket);color:#16213e;border-radius:10px;padding:10px 16px;
+ -webkit-mask:radial-gradient(circle 8px at 0 50%,#0000 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 8px at 100% 50%,#0000 98%,#000) right/51% 100% no-repeat;
+ mask:radial-gradient(circle 8px at 0 50%,#0000 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 8px at 100% 50%,#0000 98%,#000) right/51% 100% no-repeat}
+.ticket b{font-size:2.4rem;line-height:1;font-weight:800}
+.ticket span{font-weight:600}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+details summary{cursor:pointer;color:var(--muted);font-size:.9rem}
+ol.log{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:.9rem}
+aside .card{position:sticky;top:16px}
+aside h2{margin:0;font-size:1.05rem}
+label{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}
+.empty{padding:32px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;display:none;max-width:90vw}
+#toast.err{background:var(--bad);color:#fff}
+</style>
+</head>
+<body>
+<div class="note">Live demo: everything runs in your browser and resets on refresh. Use “Fast-forward 1 hour” to see a hold expire.</div>
+<header>
+  <h1>Campus Marketplace</h1>
+  <div class="who">
+    <label style="display:flex;gap:8px;align-items:center">Acting as
+      <select id="me" aria-label="Acting as"></select></label>
+    <input id="newname" placeholder="New student name" aria-label="New student name" size="14">
+    <button class="btn ghost" id="addUser">Add student</button>
+    <button class="btn ghost" id="demo">Load demo data</button>
+    <button class="btn ghost" id="ff">Fast-forward 1 hour</button>
+  </div>
+</header>
+<main>
+  <section>
+    <p class="lead">Claim an item to join its queue. The first person in line holds it for a limited time; if they don't complete the sale, the next person is moved up automatically.</p>
+    <div id="list" class="list"></div>
+  </section>
+  <aside>
+    <form class="card" id="newListing">
+      <h2>Sell an item</h2>
+      <label>Title<input name="title" required maxlength="80"></label>
+      <label>Price (₹)<input name="price" type="number" min="0" step="1" required></label>
+      <label>Hold time (minutes)<input name="hold" type="number" min="1" value="60" required></label>
+      <label>Description<input name="desc" maxlength="200"></label>
+      <button class="btn" id="post">Post listing</button>
+    </form>
+  </aside>
+</main>
+<div id="toast" role="status"></div>
+<script>
+const $=s=>document.querySelector(s);
+let me=null, names={};
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nm=id=>names[id]||("Student "+id);
+function toast(msg,err){const t=$("#toast");t.textContent=msg;t.className=err?"err":"";t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display="none",3500)}
+
+/* ===== In-browser demo engine: same rules as app/service.py, no server needed ===== */
+const DB={users:[],listings:[],claims:[],events:[]};let skew=0,savedMe=null;
+const now=()=>Math.floor(Date.now()/1000)+skew;
+const fail=(m)=>{throw new Error(m)};
+const ev=(l,type,at,c,actor,detail="")=>DB.events.push({listing:l,type,claim_id:c||null,actor_id:actor||null,detail,at});
+function promote(l,start){
+  const n=DB.claims.find(c=>c.listing===l.id&&c.status==="QUEUED");
+  if(n){n.status="HOLDING";n.exp=start+l.hold*60;l.status="HELD";ev(l.id,"HOLD_STARTED",start,n.id,n.buyer)}
+  else l.status="OPEN";
+}
+function settle(l){
+  for(;;){
+    if(l.status!=="HELD")return l;
+    const h=DB.claims.find(c=>c.listing===l.id&&c.status==="HOLDING");
+    if(h&&h.exp>now())return l;
+    if(!h){promote(l,now());continue}
+    h.status="EXPIRED";ev(l.id,"HOLD_EXPIRED",h.exp,h.id,h.buyer);promote(l,h.exp);
+  }
+}
+function view(l,me){
+  settle(l);
+  const q=DB.claims.filter(c=>c.listing===l.id&&c.status==="QUEUED"),h=DB.claims.find(c=>c.listing===l.id&&c.status==="HOLDING");
+  const o={id:l.id,seller_id:l.seller,title:l.title,description:l.desc,price_cents:l.price,hold_minutes:l.hold,status:l.status,queue_length:q.length,held_until:h?h.exp:null};
+  const m=DB.claims.find(c=>c.listing===l.id&&c.buyer===me&&(c.status==="QUEUED"||c.status==="HOLDING"));
+  o.my_claim=m?{claim_id:m.id,status:m.status,position:m.status==="HOLDING"?0:q.indexOf(m)+1,hold_expires_at:m.exp||null}:null;
+  if(me===l.seller&&h)o.holder={claim_id:h.id,buyer_id:h.buyer};
+  return o;
+}
+const getL=id=>DB.listings.find(l=>l.id===+id)||fail("Listing not found");
+function sellerL(id){const l=settle(getL(id));if(l.seller!==me)fail("Only the seller can do this");return l}
+const holderOf=l=>DB.claims.find(c=>c.listing===l.id&&c.status==="HOLDING");
+async function api(path,method="GET",b){
+  let m;
+  if(path==="/users"&&method==="GET")return DB.users.map(u=>({...u}));
+  if(path==="/users"){const u={id:DB.users.length+1,name:b.name};DB.users.push(u);return u}
+  if(path==="/listings"&&method==="GET")return DB.listings.slice().reverse().map(l=>view(l,me));
+  if(path==="/listings"){if(!b.title.trim()||b.price_cents<0||b.hold_minutes<=0)fail("Check the form values");
+    const l={id:DB.listings.length+1,seller:me,title:b.title.trim(),desc:b.description||"",price:b.price_cents,hold:b.hold_minutes,status:"OPEN"};
+    DB.listings.push(l);ev(l.id,"LISTED",now(),null,me);return view(l,me)}
+  if(m=path.match(/^\/listings\/(\d+)\/claims$/)){const l=settle(getL(m[1]));
+    if(l.seller===me)fail("You can't claim your own listing");
+    if(l.status==="SOLD"||l.status==="CANCELLED")fail("Listing is "+l.status.toLowerCase());
+    if(DB.claims.some(c=>c.listing===l.id&&c.buyer===me&&(c.status==="QUEUED"||c.status==="HOLDING")))fail("You already have an active claim on this listing");
+    const c={id:DB.claims.length+1,listing:l.id,buyer:me,status:"QUEUED"};DB.claims.push(c);ev(l.id,"CLAIM_QUEUED",now(),c.id,me);
+    if(l.status==="OPEN")promote(l,now());return view(l,me)}
+  if(m=path.match(/^\/claims\/(\d+)$/)){const c=DB.claims.find(x=>x.id===+m[1])||fail("Claim not found");
+    if(c.buyer!==me)fail("Not your claim");const l=settle(getL(c.listing));
+    if(c.status!=="QUEUED"&&c.status!=="HOLDING")fail("Claim already "+c.status.toLowerCase());
+    const was=c.status==="HOLDING";c.status="WITHDRAWN";ev(l.id,"CLAIM_WITHDRAWN",now(),c.id,me);if(was)promote(l,now());return view(l,me)}
+  if(m=path.match(/^\/listings\/(\d+)\/complete$/)){const l=sellerL(m[1]),h=holderOf(l)||fail("No active holder to complete the sale with");
+    h.status="COMPLETED";DB.claims.filter(c=>c.listing===l.id&&c.status==="QUEUED").forEach(c=>c.status="CLOSED");
+    l.status="SOLD";ev(l.id,"SOLD",now(),h.id,me,"buyer "+h.buyer);return view(l,me)}
+  if(m=path.match(/^\/listings\/(\d+)\/skip-holder$/)){const l=sellerL(m[1]),h=holderOf(l)||fail("No active holder");
+    h.status="SKIPPED";ev(l.id,"HOLDER_SKIPPED",now(),h.id,me,b&&b.reason);promote(l,now());return view(l,me)}
+  if(m=path.match(/^\/listings\/(\d+)\/cancel$/)){const l=sellerL(m[1]);if(l.status==="SOLD")fail("Already sold");
+    DB.claims.filter(c=>c.listing===l.id&&["QUEUED","HOLDING"].includes(c.status)).forEach(c=>c.status="CLOSED");
+    l.status="CANCELLED";ev(l.id,"CANCELLED",now(),null,me);return view(l,me)}
+  if(m=path.match(/^\/listings\/(\d+)\/events$/)){settle(getL(m[1]));return DB.events.filter(e=>e.listing===+m[1])}
+  fail("Not found");
+}
+async function act(fn,okMsg){try{await fn();if(okMsg)toast(okMsg);await load()}catch(e){toast(e.message,true);load()}}
+const fmt=s=>{s=Math.max(0,s|0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h}h ${m}m`:`${m}m ${String(s%60).padStart(2,"0")}s`};
+
+async function loadUsers(){
+  const us=await api("/users"); names={}; us.forEach(u=>names[u.id]=u.name);
+  const sel=$("#me"); const saved=savedMe;
+  sel.innerHTML=us.map(u=>`<option value="${u.id}">${esc(u.name)}</option>`).join("")||"<option>No students yet</option>";
+  me=us.length?(us.find(u=>String(u.id)===saved)||us[0]).id:null;
+  if(me)sel.value=me;
+}
+async function load(){
+  if(!me){$("#list").innerHTML='<div class="empty">Add a student (or load demo data) to get started.</div>';return}
+  const ls=await api("/listings");
+  $("#list").innerHTML=ls.length?ls.map(card).join(""):'<div class="empty">No listings yet. Post the first item using the form.</div>';
+  tick();
+}
+function card(l){
+  const seller=l.seller_id===me, done=l.status==="SOLD"||l.status==="CANCELLED", mc=l.my_claim;
+  let body="";
+  if(mc){
+    body+=`<div class="ticket"><b>${mc.position===0?"Your turn":"#"+mc.position}</b><span>${mc.position===0
+      ?`You hold this item. <span data-exp="${mc.hold_expires_at}"></span> left to complete the sale.`
+      :`${mc.position} ${mc.position===1?"person":"people"} ahead of you in the queue.`}</span></div>`;
+  }
+  let acts="";
+  if(!done){
+    if(seller){
+      if(l.holder)acts+=`<button class="btn ok" onclick="complete(${l.id})">Mark sold to ${esc(nm(l.holder.buyer_id))}</button><button class="btn ghost" onclick="skip(${l.id})">Skip ${esc(nm(l.holder.buyer_id))}</button>`;
+      acts+=`<button class="btn warn" onclick="cancelL(${l.id})">Cancel listing</button>`;
+    }else if(mc)acts+=`<button class="btn ghost" onclick="withdraw(${mc.claim_id})">${mc.position===0?"Give up item":"Leave queue"}</button>`;
+    else acts+=`<button class="btn" onclick="claim(${l.id})">${l.status==="OPEN"?"Claim item":"Join queue"}</button>`;
+  }
+  const state=l.status==="OPEN"?"Available":l.status==="HELD"?`On hold · <span data-exp="${l.held_until}"></span> left · ${l.queue_length} waiting`:l.status==="SOLD"?"Sold":"Cancelled";
+  return `<article class="card ${done?"done":""}"><div class="top"><div><h2>${esc(l.title)}</h2>
+    <div class="meta">Sold by ${esc(nm(l.seller_id))}${l.description?" — "+esc(l.description):""}</div></div>
+    <div class="price">₹${(l.price_cents/100).toLocaleString("en-IN")}</div></div>
+    <div><span class="pill ${l.status}">${state}</span></div>${body}
+    ${acts?`<div class="row">${acts}</div>`:""}
+    <details ontoggle="if(this.open)history_(${l.id},this)"><summary>Who did what</summary><ol class="log"></ol></details></article>`;
+}
+const L={LISTED:"listed the item",CLAIM_QUEUED:"joined the queue",HOLD_STARTED:"got the hold",HOLD_EXPIRED:"ran out of time",CLAIM_WITHDRAWN:"left",HOLDER_SKIPPED:"was skipped by the seller",SOLD:"sale confirmed",CANCELLED:"listing cancelled"};
+async function history_(id,el){
+  const ev=await api(`/listings/${id}/events`);
+  el.querySelector("ol").innerHTML=ev.map(e=>`<li>${new Date(e.at*1000).toLocaleString()} — ${e.type==="SOLD"?"Seller confirmed sale to "+esc(nm(+e.detail.replace("buyer ","")))
+   :(e.actor_id||e.claim_id?esc(nm(e.actor_id))+" ":"")+L[e.type]}</li>`).join("");
+}
+function tick(){document.querySelectorAll("[data-exp]").forEach(e=>{const s=+e.dataset.exp-Date.now()/1000;e.textContent=fmt(s)})}
+const claim=id=>act(()=>api(`/listings/${id}/claims`,"POST"),"You're in the queue");
+const withdraw=id=>act(()=>api(`/claims/${id}`,"DELETE"),"You left the queue");
+const complete=id=>act(()=>api(`/listings/${id}/complete`,"POST"),"Marked as sold");
+const skip=id=>act(()=>api(`/listings/${id}/skip-holder`,"POST",{reason:"Skipped from website"}),"Holder skipped; next person promoted");
+const cancelL=id=>act(()=>api(`/listings/${id}/cancel`,"POST"),"Listing cancelled");
+
+$("#ff").onclick=()=>{skew+=3600;toast("Time moved forward 1 hour");load()};
+$("#me").onchange=e=>{me=+e.target.value;savedMe=String(me);load()};
+$("#addUser").onclick=()=>act(async()=>{const n=$("#newname").value.trim();if(!n)throw new Error("Enter a name first");
+  const u=await api("/users","POST",{name:n});$("#newname").value="";savedMe=String(u.id);await loadUsers()},"Student added");
+$("#newListing").onsubmit=e=>{e.preventDefault();const f=new FormData(e.target);
+  act(async()=>{await api("/listings","POST",{title:f.get("title"),price_cents:Math.round(f.get("price")*100),hold_minutes:+f.get("hold"),description:f.get("desc")});e.target.reset();e.target.hold.value=60},"Listing posted")};
+$("#demo").onclick=()=>act(async()=>{me=null;
+  const ids=[];for(const n of["Meera (seller)","Asha","Ravi","Kabir"])ids.push((await api("/users","POST",{name:n})).id);
+  me=ids[0];await api("/listings","POST",{title:"Engineering Mathematics textbook",price_cents:35000,hold_minutes:60,description:"Good condition"});
+  await api("/listings","POST",{title:"Study table",price_cents:120000,hold_minutes:1440});
+  savedMe=String(ids[1]);await loadUsers()},"Demo loaded. Switch students to try claiming.");
+(async()=>{try{await loadUsers();await load()}catch(e){toast(e.message,true)}})();
+setInterval(tick,1000);setInterval(()=>{if(document.visibilityState==="visible")load()},8000);
+</script>
+</body>
+</html>
